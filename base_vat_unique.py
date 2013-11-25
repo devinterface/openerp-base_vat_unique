@@ -19,9 +19,9 @@
 #
 ##############################################################################
 #import logging
-from osv import osv
-from osv import fields
-from tools.translate import _
+from openerp.osv import osv
+from openerp.osv import fields
+from openerp.tools.translate import _
 
 #_logger = logging.getLogger(__name__)
 
@@ -31,17 +31,23 @@ class res_partner(osv.osv):
 
 
     def _check_unique_insesitive(self, cr, uid, ids, context=None):
-        sr_ids = self.search(cr, 1 , [], context=context)
-	current_partner = self.browse(cr, uid, ids, context=context)[0]
+        sr_ids = self.search(cr, 1, [], context=context)
+        current_partner = self.browse(cr, uid, ids, context=context)[0]
 
 
-        lst = [x.vat.lower() for x in self.browse(cr, uid, sr_ids, context=context) if x.vat and x.id not in ids and x.supplier == current_partner.supplier]
+        lst = [x.vat.lower() for x in self.browse(cr, uid, sr_ids, context=context) if x.vat and x.id not in ids and x.parent_id.id != current_partner.id and x.supplier == current_partner.supplier]
+
         for self_obj in self.browse(cr, uid, ids, context=context):
-            if self_obj.vat and self_obj.vat.lower() in  lst:
-                return False
-            return True
+            if self_obj.parent_id.id != False:
+                return True
+            else:
+                if self_obj.vat and self_obj.vat.lower() in lst:
+                    return False
+                return True
 
-    _constraints = [(_check_unique_insesitive, 'Errore! La Partita IVA inserita esiste già associata ad un altra azienda.', ['vat'])]
+
+    _constraints = [
+        (_check_unique_insesitive, 'Errore! La Partita IVA inserita esiste già associata ad un altra azienda.', ['vat'])]
 
 res_partner()
 
